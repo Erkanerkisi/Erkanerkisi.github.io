@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Docker - k8s - Microservices part one
+title: Docker - k8s - Microservices part 1
 ---
 
 Merhaba,
@@ -19,26 +19,28 @@ Person-service projesinden bir person id vererek kişinin bilgilerini ve title b
 Projeleri ayrı ayrı dockerize ediyoruz. Her biri için Dockerfile oluşturuyoruz.
 
 
-FROM openjdk:8-jdk-alpine
-ARG JAR_FILE=target/*.jar
-EXPOSE 8080
-COPY ${JAR_FILE} /project/person-service.jar
-ENTRYPOINT ["java","-jar","project/person-service.jar"]
+	FROM openjdk:8-jdk-alpine
+	ARG JAR_FILE=target/*.jar
+	EXPOSE 8080
+	COPY ${JAR_FILE} /project/person-service.jar
+	ENTRYPOINT ["java","-jar","project/person-service.jar"]
 
-FROM openjdk:8-jdk-alpine
-ARG JAR_FILE=target/*.jar
-EXPOSE 8080
-COPY ${JAR_FILE} /project/person-title-service.jar
-ENTRYPOINT ["java","-jar","project/person-title-service.jar"]
+	FROM openjdk:8-jdk-alpine
+	ARG JAR_FILE=target/*.jar
+	EXPOSE 8080
+	COPY ${JAR_FILE} /project/person-title-service.jar
+	ENTRYPOINT ["java","-jar","project/person-title-service.jar"]
 
 Yukarıda expose demesekte springboot tomcat üzerinde default 8080 den kalkıyor. İçerde properties de server.port vermiş isek ordan expose etmemiz gerekir.
 
 imageları lokalimizde oluşturuyoruz.
 
+```
 	docker build --tag person-service .
 
 	docker build --tag person-title-service .
-	
+```
+
 Şimdi sıra deployment ve service yaml dosyalarını oluşturmaya. Deployment yaml dosyası sizin podunuzu nasıl yöneteceğinizi içeren declarative bir rehber. 
 
 k8s dökümantasyonundan detaylarına bakabilirsiniz. 
