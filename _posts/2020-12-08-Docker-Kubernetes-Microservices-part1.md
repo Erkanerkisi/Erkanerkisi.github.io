@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Docker - k8s - Microservices part 1
+title: Docker - k8s - Microservices part one
 ---
 
 Merhaba,
