@@ -123,7 +123,7 @@ Podun içine bakalım.
 ulaşabiliyoruz hem de decode halinde.
 
 Genel Hatlarıyla:
-![_config.yml]({{ site.baseurl }}/images/password.png)
+![_config.yml]({{ site.baseurl }}/images/password.PNG)
 
 
 
