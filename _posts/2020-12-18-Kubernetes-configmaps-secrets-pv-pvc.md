@@ -1,7 +1,7 @@
 ---
 layout: post
 title: k8s - Configmaps - Secrets - pv - pvc
-featured_img: /images/view1.jpg
+featured_img: /images/docker_kubernetes.png
 ---
 
 Merhaba,

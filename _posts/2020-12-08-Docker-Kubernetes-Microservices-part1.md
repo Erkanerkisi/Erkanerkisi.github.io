@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Docker - k8s - Microservices part 1
-featured_img: /images/view1.jpg
+featured_img: /images/docker_kubernetes.png
 ---
 
 Merhaba,
