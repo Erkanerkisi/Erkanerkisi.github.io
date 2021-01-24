@@ -1,6 +1,7 @@
 ---
 layout: post
 title: k8s - Configmaps - Secrets - pv - pvc
+featured_img: /images/view1.png
 ---
 
 Merhaba,
