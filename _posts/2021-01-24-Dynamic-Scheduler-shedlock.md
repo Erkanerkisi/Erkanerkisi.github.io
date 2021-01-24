@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Dynamic Scheduler and Shedlock
-featured_img: /images/view1.png
+featured_img: /images/view1.jpg
 ---
 
 Merhaba,
