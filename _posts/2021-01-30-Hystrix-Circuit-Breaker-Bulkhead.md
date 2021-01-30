@@ -23,7 +23,7 @@ Aslında hystrix'in çözmeye çalıştığı problem, dağıtık mimaride yüzl
 Peki hystrix bunu nasıl başarıyor? Tüm dışarıya çıkan veya içerindeki çağırımları command pattern ile sararak farklı bir thread de çalıştırıyor. Çağırımları kendisi sardığı için bizim belirlediğimiz değişkenlere göre hızlıca aksiyon alabiliyor mesela timeout süresi veya thread sayısının belirli bir threshold üzerine çıkmaması gibi. Adım adım neler yaptığına bakalım;
 
 
-![_config.yml]({{ site.baseurl }}/images/hystrix-command-flow-chart.png.png)
+![_config.yml]({{ site.baseurl }}/images/hystrix-command-flow-chart.png)
 
 - HystrixCommand veya HystrixObservableCommand oluşturulur.
 - Command tetiklenir veya çalıştırılır.(execute, queue, observe, toObservable)
@@ -102,10 +102,7 @@ Kısaca değişkenlere bakalım;
 
 Şimdi X uygulamasına gelen isteklerin nasıl dinamik olarak hystrix command'ine çevrildiğine bakalım;
 
-
-`deneme`
-
-`
+```
 @Component
 public class ErkanHystrixCircuitBreakerFactory extends CircuitBreakerFactory<HystrixCommand.Setter, ErkanHystrixCircuitBreakerFactory.ErkanHystrixConfigBuilder> {
 
@@ -145,7 +142,7 @@ public class ErkanHystrixCircuitBreakerFactory extends CircuitBreakerFactory<Hys
 		}
 	}
 }
-`
+```
 
 Bir factory class'ı yaratarak CircuitBreakerFactory class'ını extend ediyoruz ve create metodumuzu oluşturuyoruz. Burda bunu yapmamızdaki amaç her gelen istekte eğer configürasyonu yapmamış isek onu yapmak, eğer yapmış isek onu get ederek bir circuit breaker oluşturmak. Şimdi çağırdığımız yere bakalım;
 
@@ -157,11 +154,12 @@ public CircuitBreaker createCircuitBreaker(String name) {
 	
 "name" aslında bizim uygulama adımız. A ve B gibi. A değerini vererek factory class'ı A nın threadpool'unu kullanarak bir istek oluşturuyor.
 	
-	
-    public Response run(String name, Supplier<Response> supplier) {
-        String id = setNameIfItIsNull(name);// burda gruplayabiliriz veya default adında bir threadpool açarak bazılarını default'a yönlendirebiliriz.
-        return createCircuitBreaker(name).run(supplier, t -> callFallback(id, t));
-    }
+```
+public Response run(String name, Supplier<Response> supplier) {
+    String id = setNameIfItIsNull(name);// burda gruplayabiliriz veya default adında bir threadpool açarak bazılarını default'a yönlendirebiliriz.
+    return createCircuitBreaker(name).run(supplier, t -> callFallback(id, t));
+}
+```
 
 Ayrıca bir fallback metodumuz da mevcut. Burda circuit open olduğunda veya herhangi bir hatada fallback metodumuza düşecek ve gerekli aksiyonu almış olacağız.(Alert, log,  default response gibi)
 
