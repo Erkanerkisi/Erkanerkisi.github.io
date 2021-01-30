@@ -102,55 +102,60 @@ Kısaca değişkenlere bakalım;
 
 Şimdi X uygulamasına gelen isteklerin nasıl dinamik olarak hystrix command'ine çevrildiğine bakalım;
 
-	`@Component
-	public class ErkanHystrixCircuitBreakerFactory extends CircuitBreakerFactory<HystrixCommand.Setter, ErkanHystrixCircuitBreakerFactory.ErkanHystrixConfigBuilder> {
 
-		@Override
-		public CircuitBreaker create(String id) {
-			HystrixCommand.Setter setter;
-			Assert.hasText(id, "A CircuitBreaker must have an id.");
+`deneme`
 
-			if (this.getConfigurations().containsKey(id)) {
-				setter = this.getConfigurations().get(id);
-			} else {
-				setter = HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(id + "-group"))
-						.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(id))
-						.andCommandKey(HystrixCommandKey.Factory.asKey(id));
-				this.getConfigurations().put(id, setter);
-			}
-			return new HystrixCircuitBreaker(setter);
+`
+@Component
+public class ErkanHystrixCircuitBreakerFactory extends CircuitBreakerFactory<HystrixCommand.Setter, ErkanHystrixCircuitBreakerFactory.ErkanHystrixConfigBuilder> {
 
+	@Override
+	public CircuitBreaker create(String id) {
+		HystrixCommand.Setter setter;
+		Assert.hasText(id, "A CircuitBreaker must have an id.");
+
+		if (this.getConfigurations().containsKey(id)) {
+			setter = this.getConfigurations().get(id);
+		} else {
+			setter = HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(id + "-group"))
+					.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(id))
+					.andCommandKey(HystrixCommandKey.Factory.asKey(id));
+			this.getConfigurations().put(id, setter);
+		}
+		return new HystrixCircuitBreaker(setter);
+
+	}
+
+	@Override
+	protected ErkanHystrixConfigBuilder configBuilder(String id) {
+		return new ErkanHystrixCircuitBreakerFactory.ErkanHystrixConfigBuilder(id);
+	}
+
+	@Override
+	public void configureDefault(Function<String, HystrixCommand.Setter> defaultConfiguration) {
+	}
+
+	public static class ErkanHystrixConfigBuilder extends AbstractHystrixConfigBuilder<HystrixCommand.Setter> {
+		public ErkanHystrixConfigBuilder(String id) {
+			super(id);
 		}
 
-		@Override
-		protected ErkanHystrixConfigBuilder configBuilder(String id) {
-			return new ErkanHystrixCircuitBreakerFactory.ErkanHystrixConfigBuilder(id);
+		public HystrixCommand.Setter build() {
+			return HystrixCommand.Setter.withGroupKey(this.getGroupKey()).andCommandKey(this.getCommandKey()).andCommandPropertiesDefaults(this.getCommandPropertiesSetter());
 		}
-
-		@Override
-		public void configureDefault(Function<String, HystrixCommand.Setter> defaultConfiguration) {
-		}
-
-		public static class ErkanHystrixConfigBuilder extends AbstractHystrixConfigBuilder<HystrixCommand.Setter> {
-			public ErkanHystrixConfigBuilder(String id) {
-				super(id);
-			}
-
-			public HystrixCommand.Setter build() {
-				return HystrixCommand.Setter.withGroupKey(this.getGroupKey()).andCommandKey(this.getCommandKey()).andCommandPropertiesDefaults(this.getCommandPropertiesSetter());
-			}
-		}
-	}`
+	}
+}
+`
 
 Bir factory class'ı yaratarak CircuitBreakerFactory class'ını extend ediyoruz ve create metodumuzu oluşturuyoruz. Burda bunu yapmamızdaki amaç her gelen istekte eğer configürasyonu yapmamış isek onu yapmak, eğer yapmış isek onu get ederek bir circuit breaker oluşturmak. Şimdi çağırdığımız yere bakalım;
 
-    ```
-	public CircuitBreaker createCircuitBreaker(String name) {
-        return erkanHystrixCircuitBreakerFactory.create(name);
-    }
-	```
+```
+public CircuitBreaker createCircuitBreaker(String name) {
+    return erkanHystrixCircuitBreakerFactory.create(name);
+}
+```
 	
-"name" aslında bizim uygulama adımız. A ve B gibi. A değerini vererek factory class'ı A nın threadpool ismini bularak ve kullanarak bir istek oluşturuyor.
+"name" aslında bizim uygulama adımız. A ve B gibi. A değerini vererek factory class'ı A nın threadpool'unu kullanarak bir istek oluşturuyor.
 	
 	
     public Response run(String name, Supplier<Response> supplier) {
@@ -167,7 +172,7 @@ circuit breaker ve isolation stratejilerini tanımlayalım.
 	errorThresholdPercentage:  hata yüzde sınırı.
 	
 	
-Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. yüzde 16 dan fazla istek hatalı ise circuit open olacak ve diğer gelen istekler reddedilecek. Bu süre de 2 saniye.
+Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. 16 dan fazla istek hatalı ise circuit open olacak ve diğer gelen istekler reddedilecek. Bu süre de 2 saniye.
 
 	hystrix: 
 	  command:
@@ -193,7 +198,9 @@ Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. y�
 			    timeoutInMilliseconds: 30000
 
 
-	timeoutInMilliseconds: Streteji default olarak THREAD'dir. Semaphore' a çevrilmesi istenirse belirtilmesi gerekiyor. Biz thread ile ilerledik ve timeoutInMilliseconds değerini 30 saniye olarak belirledik. Ayrı olarak açılan thread'in time out süresi 30 sn.
+	timeoutInMilliseconds: Streteji default olarak THREAD'dir. Semaphore' a çevrilmesi istenirse ayrıca belirtilmesi gerekiyor. Biz thread ile ilerledik ve timeoutInMilliseconds değerini 30 saniye olarak belirledik. Ayrı olarak açılan thread'in time out süresi 30 sn.
+	
+	maxConcurrentRequests: Sadece strateji semaphore olduğunda çalışır. eşzamanlı karşılanacak maksimum request sayısı.
 
 
 X uygulamasının diğer herhangi bir servisin geç cevap vermesi veya timeout alması halinde diğer tüm servislerin etkilenmemesi için bu şekilde bir strateji oluşturduk.
