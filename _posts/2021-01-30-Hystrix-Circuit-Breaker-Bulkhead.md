@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Hystrix-Circuit-Breaker-Bulkhead-patterns
-featured_img: /images/view1.jpg
+featured_img: /images/hystrixlogo.jpg
 ---
 
 Merhaba,
