@@ -11,9 +11,13 @@ Bu yazımda hystrix, circuit breaker ve bulkhead patternlerinden bahsedecek ve b
 Hystrix, netflix'in open source olarak yazılım dünyasına sunduğu ve dağıtık sistemlerde bağımlılıkların hata durumlarına karşı önlemler almak veya yönetmek anlamında ortaya çıkmış bir kütüphanedir. Ortaya çıkma sebeplerini netflix şu şekilde bahsediyor;
 
 - Bağımlılıklardan kaynaklı gecikmelerden ve hatalardan korunmak
+
 - Komplex dağıtık bir mimaride hataların katlanarak büyümesini engellemek
+
 - Hata ortaya çıktığında hemen fail vermesi ve düzeltilmesini sağlamak
+
 - Fallback metodu belirleyerek hata durumlarında veya sınırların aşılması durumlarında yönlendirme yapmak
+
 - gerçek zamanlı görüntüleme ve alert mekanizması kurmak
 
 
@@ -26,13 +30,21 @@ Peki hystrix bunu nasıl başarıyor? Tüm dışarıya çıkan veya içerindeki 
 ![_config.yml]({{ site.baseurl }}/images/hystrix-command-flow-chart.png)
 
 - HystrixCommand veya HystrixObservableCommand oluşturulur.
+
 - Command tetiklenir veya çalıştırılır.(execute, queue, observe, toObservable)
+
 - Bu command için request caching açık ise response cache de var mı kontrol eder ve varsa anında döner.
+
 - Cache yok ise command execute edildiğinde hystrix circuit breaker açık mı diye kontrol eder. Eğer açık ise (buna tripped de denir.) komut çalıştırılmaz ve direk fallback metoduna yönlendirilir. Eğer circuit breaker kapalı ise thread veya queue kapasite kontrolü yapılır.
+
 - threadpool veya queue tam kapasitedeyse hystrix komutu çalıştırmaz ve direk fallback metoduna yönlendirir.
+
 - Bu noktada artık hystrix command çalıştırılır.
+
 - Command çalıştırıldığında (ayrı thread kullanıldığında) eğer çalıştırma belirlenen timeout süresinde bitmez ise TimeoutException fırlatılır ve fallback metoduna yönlendirilir.
+
 - Herhangi bir hata alınmaz ise hystrix loglama ve metrik toplama işlemlerinden sonra responsu döner.
+
 - Yukarıdaki metriklerden kastım aslında circuit breaker için success, failure, rejection ve timeout gibi bilgileri toplar ki bir sonraki command de bu bilgiler ile gidişatı belirleyecektir.
 
 ### Circuit Breaker pattern
@@ -56,12 +68,17 @@ Her histrix command'i bir thread açarak ilgili bağımlılığa gidiyor ve iste
 
 Netflix ideal olarak globalde tüm tomcat threadlerinde bunu uyguluyor. Fakat tek bir user ve threadinde de yapmak mümkün.
 
+
+
 ![_config.yml]({{ site.baseurl }}/images/collapser.png)
+
 
 
 CASE
 
+
 ![_config.yml]({{ site.baseurl }}/images/hystrix.png)
+
 
 Şekildeki gibi istekler gateway üzerinden X uygulamasına, ordan ise belirlenen uygulamalara rest call'lar atarak istenen responselar dönülmektedir. Bu yapıda başlıca olabilecekleri sıralayalım.
 
@@ -90,7 +107,10 @@ X uygulaması üzerinde A isimli bir threadpool oluşturarak değişkenleri tan�
 		  allowMaximumSizeToDivergeFromCoreSize: true
 		default: ...
 
+
+
 Bu değerlere göre gelen isteklerin hangi uygulamalara ve kullanması gereken threadpoollarına kadar belirlemiş oluyoruz. Hysrix de A uygulamasına gelen çağrıların thread kullanımlarını sınırlayabilmemizi olanak tanıyor. A uygulamasına gelen yoğun isteklerin ve akabinde timeout almaya başlamasıyla X deki tüm threadleri tüketmesini engelleyerek diğer isteklerin hala çalışabilmesini sağlıyoruz.
+
 
 Kısaca değişkenlere bakalım;
 
@@ -144,15 +164,19 @@ public class ErkanHystrixCircuitBreakerFactory extends CircuitBreakerFactory<Hys
 }
 ```
 
+
 Bir factory class'ı yaratarak CircuitBreakerFactory class'ını extend ediyoruz ve create metodumuzu oluşturuyoruz. Burda bunu yapmamızdaki amaç her gelen istekte eğer configürasyonu yapmamış isek onu yapmak, eğer yapmış isek onu get ederek bir circuit breaker oluşturmak. Şimdi çağırdığımız yere bakalım;
+
 
 ```
 public CircuitBreaker createCircuitBreaker(String name) {
     return erkanHystrixCircuitBreakerFactory.create(name);
 }
 ```
+
 	
 "name" aslında bizim uygulama adımız. A ve B gibi. A değerini vererek factory class'ı A nın threadpool'unu kullanarak bir istek oluşturuyor.
+	
 	
 ```
 public Response run(String name, Supplier<Response> supplier) {
