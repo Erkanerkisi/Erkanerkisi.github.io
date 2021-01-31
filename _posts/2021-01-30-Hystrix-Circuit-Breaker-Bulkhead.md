@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Hystrix-Circuit-Breaker-Bulkhead-patterns
+title: Hystrix Circuit Breaker Bulkhead
 featured_img: /images/hystrixlogo.jpg
 ---
 
@@ -225,6 +225,22 @@ Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. 16
 	maxConcurrentRequests: Sadece strateji semaphore olduğunda çalışır. eşzamanlı karşılanacak maksimum request sayısı.
 
 
-X uygulamasının diğer herhangi bir servisin geç cevap vermesi veya timeout alması halinde diğer tüm servislerin etkilenmemesi için bu şekilde bir strateji oluşturduk.
+### Hystrix değerlerini nasıl ayarlamalı?
+
+Yukarıda bahsettiğimiz threadpool değerlerini baz alalım. Uygulamalarımız var ve bu değerleri bir şekilde vermemiz lazım. Hystrix de bu konuda bir kesinlik olmadığını söylerken prod sistemlerde zaman içinde doğru değerlerin bulunacağından bahsediyor.
+
+Uygulamalarımızı canlı ortamda izlerken hata oranlarımızın arttığını ve hystrix'in reject ettiği istekleri gördüğümüzde panik olarak değerleri arttırmamalıyız. Zaten değerleri doğru bir şekilde vermiş isek bu kütüphaneyi kullanarak ortaya çıkarmak istediğimiz şey bu. Uygulamalarımızı olağan dışı hallerden korumak. Her olağan dışı halde parametreleri arttırırsak kütüphanenin kullanımı bir anlam ifade etmeyebilir.
+
+Peki optimum değerleri en başta nasıl vereceğiz? Hystrix'in github sayfasında bununla ilgili bir formül ortaya çıkarılmış.
+
+Request per second at peak when healty * 99th percentile latency in seconds + breathing room
+
+Uygulamamızı zaten bir tool yardımıyla veya loglar ile monitor ediyorsak, gelen request sayıları ortalama olarak bellidir. Yoğun bir günde saniyedeki request sayısını, servisin responselarının %99 nu kapsayan süre(%99th percentile latency şeklinde geçer. Response'ların %99'unun bu süreden az olması öngörülüyor. ) ile çarparak nefes alacak kadarda bir ekleme sonucu ortaya bir değer çıkıyor. Bu değer optimal olmamakla birlikte başlangıç olarak bir fikir verebilir. 
+
+
+![_config.yml]({{ site.baseurl }}/images/thread-configuration.png)
+
+
+Sonuç olarak, X uygulamasının diğer herhangi bir servisin geç cevap vermesi veya timeout alması halinde diğer tüm servislerin etkilenmemesi için bu şekilde bir strateji oluşturduk.
 
 Teşekkürler.
