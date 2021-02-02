@@ -10,9 +10,12 @@ Bu yazıda hystrix ve resilient patternlerden olan circuit breaker ve bulkheadde
 
 ## 1. Hystrix
 
+
 Hystrix, netflix'in open source olarak yazılım dünyasına sunduğu ve dağıtık sistemlerde bağımlılıkların hata durumlarına karşı önlemler almak veya yönetmek anlamında ortaya çıkmış bir [kütüphanedir](https://github.com/Netflix/Hystrix).
 
+
 ### 1.1 Hystrix Neden Ortaya Çıktı?
+
 
 Ortaya çıkma sebeplerini Netflix kendi github hesabında [şu şekilde](https://github.com/Netflix/Hystrix/wiki) bahsediyor;
 
@@ -32,6 +35,7 @@ Hystrix'in çözmeye çalıştığı problem, dağıtık mimaride yüzlerce serv
 
 ### 1.2 Resilient Patterns
 
+
 Uygulamaların daha dayanıklı olmasını sağlamak için aşağıda popüler olan resilient patternler gösterilmiştir. Bunlardan ilk ikisine bakacağız.
 
 * Circuit Breaker Pattern
@@ -44,10 +48,12 @@ Uygulamaların daha dayanıklı olmasını sağlamak için aşağıda popüler o
 
 ### 1.2.1 Circuit Breaker
 
+
 Circuit breaker, servisler arasındaki iletişimde kullanıcın belirlediği hata oranlarının aşılması durumunda aktif duruma geçerek aradaki bağlantıyı kesen(devreyi açan) bir yönetim şeklidir. Hata alınan servise yapılan istekler engellenir ve kullanıcın tanımladığı bir fallback metoduna yönlendirilir. Bu sayede hata alınan servise sürekli istek atılması engellenmiş olur. Bir süre sonra servisin durumunun düzelip düzelmediğini anlamak için birkaç örnek request yönlendilir ve yanıt beklenir. Eğer yanıtlar başarılı ise devre kapanır ve akış tekrardan eski halini alır. Servisten yine hata gelmesi durumunda devre açılır ve yine kullanıcın belirlediği süre(sleep window) kadar gelen requestler reddedilir.
 
 
 ### 1.2.2 Bulkhead
+
 
 Bulkhead pattern, bir servisin geç cevap vermesi veya timeout'a düşmesi halinde tüm threadlerin kullanılmasını engellemek veya farklı bir deyişle ilgili servisinin eşzamanlı maksimum n kadar requeste/thread'e cevap verebilir olmasının ayarlanmasını sağlamak ile ilgilidir. Bulkhead sayesinde ilgili uygulamanın belli bir kısmı yanıt veremez olduğunda diğer kısımlarının hala çalışıyor olması sağlanır. 
 
@@ -58,7 +64,12 @@ Bulkhead pattern, bir servisin geç cevap vermesi veya timeout'a düşmesi halin
 Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command pattern yardımıyla ile sararak farklı bir thread de çalıştırıyor. Bu sayede kendi içerisinde tuttuğu metriklere göre de gelen isteklerin belirlediğimiz değerleri aşıp aşmadığını bilebiliyor. Örneğin timeout süresi veya thread sayısının belirli bir threshold üzerine çıkmaması gibi. Adım adım neler yaptığını inceleyelim;
 
 
+
+
 ![_config.yml]({{ site.baseurl }}/images/hystrix-command-flow-chart.png)
+
+
+
 
 - HystrixCommand veya HystrixObservableCommand oluşturulur.
 
@@ -79,6 +90,7 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 - Yukarıdaki metriklerden kastım aslında circuit breaker için success, failure, rejection ve timeout gibi bilgileri toplar ki bir sonraki command de bu bilgiler ile gidişatı belirleyecektir.
 
 
+
 ### 1.4 Hystrix Configs
 
 
@@ -86,13 +98,15 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 
 
+
 **coreSize:** Minimum hazırda bulunması gereken thread sayısı.
 
 **maximumSize:** coreSize geçildiğinde çıkılacak maksimum thread sayısı.
 
-**allowMaximumSizeToDivergeFromCoreSize:** coreSize aşıldığında maximumSize'ın kullanılması için bir flag. 											 True ise maximumSize a çıkar. false ise maximumSize çalışmaz.
+**allowMaximumSizeToDivergeFromCoreSize:** coreSize aşıldığında maximumSize'ın kullanılması için bir flag.True ise maximumSize a çıkar. false ise maximumSize çalışmaz.
 
-**keepAliveTimeMinutes:** coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada 						 kapatılacağı bilgisi.	
+**keepAliveTimeMinutes:** coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada kapatılacağı bilgisi.	
+
 
 
 
@@ -100,11 +114,13 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
  
  
-**requestVolumeThreshold:** Hystrix'in hata oranlarına bakacağı request sayısı(örneğin sondan itibaren 20 							 requeste bak gibi.).
+ 
+**requestVolumeThreshold:** Hystrix'in hata oranlarına bakacağı request sayısı(örneğin sondan itibaren 20 requeste bak gibi.).
 
 **sleepWindowInMilliseconds:** Circuit breakerın açık kalacağı süre.
 
 **errorThresholdPercentage:**  Hata yüzde sınırı.
+
 
 
 
@@ -122,6 +138,7 @@ Execution stratejisi defaultta THREAD olarak veriliyor.
 #### 1.4.3.1 Thread
 
 
+
 Thread isolation, gelen tüm requestler ayrı, fixed bir threadpool'a taşınır ve orada yönetilir. Ana thread'den izole etmenin avantajı eğer çağrılan servis timeout alır ise ana thread yoluna devam eder.
 
 
@@ -131,6 +148,7 @@ Thread isolation, gelen tüm requestler ayrı, fixed bir threadpool'a taşınır
 
 
 #### 1.4.3.2 Semaphore
+
 
 
 Semaphore isolation, ayrı bir thread'de yönetmez(örneğin tomcat threadinden devam eder) ve ana thread'de hystrix komutunu çağırır. Burda belirlenen max eşzamanlı çağırım sayısına kadar izin verir. Ayrı bir thread olmadığından timeout alırsa thread isolationdaki gibi yoluna devam edemez.
@@ -170,11 +188,13 @@ Uygulamamızı zaten bir tool yardımıyla veya loglar ile monitor ediyorsak, ge
 ### 1.5 Tomcat ve Hystrix Threadleri
 
 
+
 Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 
 
 
 ### 1.5.1 Tomcat configs
+
 
 
 
@@ -190,7 +210,9 @@ Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 
 
 
+
 ### 1.5.2 Threadler
+
 
 
 Hystrix komutu çalıştırıldığında "Hystrix-commandname" şeklinde bir thread açılır. Buna paralel olarak "HystrixTimer" adında bir thread daha açılır. Timer threadi sizin komutunuz çalıştırıldığında timeout alıp almamasını kontrol eden threaddir.
@@ -205,7 +227,9 @@ Eşzamanlı gelen isteklerin sayısı tomcat maksimum thread sayısından fazla 
 
 
 
+
 ### 1.6 Request Collapsing
+
 
 
 Hystrix'de çok kısa süren fakat yoğun istek alan servisler için hystrix commandlerini toplayarak tek thread ve networkde kullanım mümkündür. Buna Request Collapsing deniyor ve Netflix'in ihtiyaçları neticesinde ortaya çıkmıştır. Normalde her histrix komutu bir thread açarak ilgili bağımlılığa gidiyor ve istek gönderiyor. Çok kısa zamanlarda(histrix dökümantasyonunda 10ms ve daha az olarak belirtilmiş) birden fazla command geliyor ise bu requestleri toplayıp tek thread açarak ilgili bağımlılığa gitmek request collapsing ile mümkün oluyor. Kullanılmasının en önemli nedeni eşzamanlı çalıştırılan histrix commandleri için thread ve network connection kullanım sayılarını azalmak.
@@ -213,11 +237,15 @@ Hystrix'de çok kısa süren fakat yoğun istek alan servisler için hystrix com
 Netflix ideal olarak globalde tüm tomcat threadlerinde bunu uyguluyor. Fakat tek bir user ve threadinde de yapmak mümkün.
 
 
+
+
 ![_config.yml]({{ site.baseurl }}/images/collapser.png)
 
 
 
+
 ## 2.0 Use Case
+
 
 
 Aşağıdaki gibi istekler gateway üzerinden X uygulamasına, ordan ise belirlenen uygulamalara rest istekler atarak istenen cevaplar dönülmektedir. Bu yapıda başlıca olabilecekleri sıralayalım.
