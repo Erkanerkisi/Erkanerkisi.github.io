@@ -186,7 +186,7 @@ Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 
 **max-connections:** Servera yapılabilecek maksimum bağlantı sayısı.
 
-**accept-count:** Kuyrukta bekletilen connection sayısı.
+**accept-count:** Kuyrukta bekletilen bağlantı sayısı.
 
 
 
@@ -195,11 +195,13 @@ Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 
 Hystrix komutu çalıştırıldığında "Hystrix-commandname" şeklinde bir thread açılır. Buna paralel olarak "HystrixTimer" adında bir thread daha açılır. Timer threadi sizin komutunuz çalıştırıldığında timeout alıp almamasını kontrol eden threaddir.
 
-Hystrix, her komut geldiğinde coreSize değerine kadar thread açar ve bu threadler de müsait olan tomcat threadlerini kullanırlar. Hystrix coreSize değerine kadar her komutta diğer hystrix threadleri müsait olsalarda farklı bir thread açılır.
+Hystrix, her komut geldiğinde coreSize değerine kadar thread açar ve bu threadler de müsait olan tomcat threadlerini kullanırlar. Hystrix coreSize değerine kadar her komutta diğer hystrix threadleri müsait olsa dahi farklı bir hystrix threadi açar.
 
-Eşzamanlı olarak komut gönderildiğinde eğer tomcat tarafında yeterli thread yok ise tomcat threadleri açılmaya başlanıyor. coreSize değeri minimum tomcat spare değerinden büyük olduğunda hystrix threadleri halen tomcat threadlerini kullandığı için var olan müsait tomcat threadleri tekrardan minimum seviyesine inmiyor. Örneğin coreSize 20, tomcat minimum spare thread değeri 15, maximum 25 olsun. Eşzamanlı gelinen 20 komuttan sonra bekleyen hystrix threadi 20 olacaktır. Bu nedenle bekleyen tomcat thread sayısı da 20 olacaktır.
+Eşzamanlı olarak komut gönderildiğinde eğer tomcat tarafında yeterli thread yok ise tomcat threadleri açılmaya başlanır. coreSize değeri minimum tomcat spare değerinden büyük olduğunda hystrix threadleri halen tomcat threadlerini kullandığı için var olan müsait tomcat threadleri tekrardan minimum seviyesine inmez. Örneğin coreSize 20, tomcat minimum spare thread değeri 15, maximum 25 olsun. Eşzamanlı gelinen 20 komuttan sonra bekleyen hystrix threadi 20 olacaktır. Bu nedenle bekleyen tomcat thread sayısı da 20 olacaktır.
 
-coreSize değeri aşıldığında maximumSize değerine kadar hystrix thread açabiliyor(Eğer allowMaximumSizeToDivergeFromCoreSize değeri true yapılmış ise). Bu da yeterli gelmediğinde tomcat threadi açıyor anlamına geliyor. Sonrasında keepAliveTimeMinutes değerine göre kullanılmayan hystrix threadleri kendini terminate ediyor ve tomcat threadini de kapatmış oluyor.
+coreSize değeri aşıldığında maximumSize değerine kadar hystrix yeni bir hystrix threadi oluşturur(Eğer allowMaximumSizeToDivergeFromCoreSize değeri true yapılmış ise). Bu sırada yeterli tomcat threadi yok ise tomcat threadi de açılır. Sonrasında keepAliveTimeMinutes değerine göre kullanılmayan hystrix threadleri kendini terminate eder ve tomcat threadini de kapatmış olur.
+
+Eşzamanlı gelen isteklerin sayısı tomcat maksimum thread sayısından fazla ama histrix threadpoolundaki maximumSize değerinden az ise, yapılan istekler reddedilmez ve full dolan threadlerin işini bitirmesi beklenir. Hystrix'deki "timeoutInMilliseconds" değişkeni bu konu ile bağlantılı değildir. Bu değişken komut başladığında bitmesine kadarki sürenin timeout değeridir. Burda hystrix henüz kullanacak müsait bir thread bulamadığından beklemeye geçer. Bulduğu an işi komutu çalıştırır.
 
 
 
