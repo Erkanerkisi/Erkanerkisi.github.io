@@ -232,7 +232,7 @@ Eşzamanlı gelen isteklerin sayısı tomcat maksimum thread sayısından fazla 
 
 
 
-Hystrix'de çok kısa süren fakat yoğun istek alan servisler için hystrix commandlerini toplayarak tek thread ve networkde kullanım mümkündür. Buna Request Collapsing deniyor ve Netflix'in ihtiyaçları neticesinde ortaya çıkmıştır. Normalde her histrix komutu bir thread açarak ilgili bağımlılığa gidiyor ve istek gönderiyor. Çok kısa zamanlarda(histrix dökümantasyonunda 10ms ve daha az olarak belirtilmiş) birden fazla command geliyor ise bu requestleri toplayıp tek thread açarak ilgili bağımlılığa gitmek request collapsing ile mümkün oluyor. Kullanılmasının en önemli nedeni eşzamanlı çalıştırılan histrix commandleri için thread ve network connection kullanım sayılarını azalmak.
+Hystrix'de çok kısa süren fakat yoğun istek alan servisler için hystrix commandlerini toplayarak tek thread ve networkde kullanım mümkündür. Buna [Request Collapsing](https://github.com/Netflix/Hystrix/wiki/How-it-Works#RequestCollapsing) deniyor ve Netflix'in ihtiyaçları neticesinde ortaya çıkmıştır. Normalde her histrix komutu bir thread açarak ilgili bağımlılığa gider ve istek gönderir. Çok kısa zamanlarda([histrix dökümantasyonunda](https://github.com/Netflix/Hystrix/wiki/How-it-Works#RequestCollapsing) **10ms** ve daha az olarak belirtilmiş) birden fazla command geliyor ise bu requestleri toplayıp tek thread açarak ilgili bağımlılığa gitmek request collapsing ile mümkün oluyor. Kullanılmasının en önemli nedeni eşzamanlı çalıştırılan histrix commandleri için thread ve network connection kullanım sayılarını azalmak.
 
 Netflix ideal olarak globalde tüm tomcat threadlerinde bunu uyguluyor. Fakat tek bir user ve threadinde de yapmak mümkün.
 
@@ -254,9 +254,9 @@ Aşağıdaki gibi istekler gateway üzerinden X uygulamasına, ordan ise belirle
 ![_config.yml]({{ site.baseurl }}/images/hystrix.png)
 
 
-- Her gelen istek X uygulamasından dağıtıldığı için herhangi bir bağımlılıkta beliren hata, geç cevap verme veya timeoutların uygulamadaki tüm threadleri kullanabilecek olması ve diğer uygulamalarda sorun olmamasına rağmen X uygulamasında kullanılacak thread kalmaması.
+- Her gelen istek X uygulamasından dağıtıldığı için herhangi bir bağımlılıkta beliren **hata, geç cevap verme veya timeoutların** uygulamadaki tüm threadleri kullanabilecek olması ve diğer uygulamalarda sorun olmamasına rağmen X uygulamasında kullanılacak thread kalmaması.
 
-- Bağımlılıklarda oluşan hatalarda veya timeoutlarda  uygulamaları sürekli istekler ile boğma problemi. Ve akabinde ne yapılması gerektiği belirsizliği.
+- Bağımlılıklarda oluşan hatalarda veya timeoutlarda  uygulamaları **sürekli istekler ile boğma problemi**. Ve akabinde **ne yapılması gerektiği belirsizliği**.
 
 
 Ayrı ayrı uygulamalara circuit breaker pattern'i uygulayabileceğimiz gibi, X uygulamasına da hem circuit breaker hem bulkhead patterni uygulayabiliriz. Spring bize bazı anotasyonlar ile kolay bir şekilde hystrix command oluşturarak yardımcı oluyor fakat burada durum biraz farklı. Gatewayden gelen her isteğin ayrıştırılarak dinamik olarak hangi uygulamaya gitmesi gerektiğine karar veriyoruz ve o uygulamaya rest call atıyoruz. ilgili bilgiler de yine db de tutularak karar verildiğini farz edelim. Ama dinamik olarak nasıl circuit breaker uygulayabiliriz?
@@ -351,7 +351,7 @@ public Response run(String name, Supplier<Response> supplier) {
 
 Ayrıca bir fallback metodu tanımlanabilir. Circuit breaker açıldığında veya herhangi bir hatada istekler fallback metoduna düşer ve gerekli aksiyon alınmış olur.(Alert, log,  default response gibi)
 
-A için aşağıdaki değerleri baz alınırsa, son 20 istek değerlendirilecek. 16 dan fazla istek hatalı ise circuit açılacak(tripped) ve diğer gelen istekler 2 sn boyunca reddedilecek.
+A için aşağıdaki değerleri baz alınırsa, son **20** istek değerlendirilecek. **16** dan fazla istek hatalı ise circuit açılacak(tripped) ve diğer gelen istekler **2** sn boyunca reddedilecek.
 
 	hystrix: 
 	  command:
