@@ -14,7 +14,7 @@ Hystrix, netflix'in open source olarak yazılım dünyasına sunduğu ve dağıt
 
 ### 1.1 Hystrix Neden Ortaya Çıktı?
 
-Ortaya çıkma sebeplerini Netflix kendi github hesabında(link koy) şu şekilde bahsediyor;
+Ortaya çıkma sebeplerini Netflix kendi github hesabında [şu şekilde](https://github.com/Netflix/Hystrix/wiki) bahsediyor;
 
 - Bağımlılıklardan kaynaklı gecikmelerden ve hatalardan korunmak.
 
@@ -111,6 +111,10 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 ### 1.4.3 Execution Stratejileri
 
 
+* Thread
+
+* Semaphore
+
 Execution stratejisi defaultta THREAD olarak veriliyor.
 
 
@@ -135,7 +139,7 @@ Semaphore isolation, ayrı bir thread'de yönetmez(örneğin tomcat threadinden 
 **maxConcurrentRequests:** Eşzamanlı karşılanacak maksimum request sayısı.
 
 	
-Diğer tüm configler için Hystrix'in ilgili github wiki sayfasından bakılabilir(Link).
+Diğer tüm configler için Hystrix'in [ilgili github wiki sayfasından bakılabilir.](https://github.com/Netflix/Hystrix/wiki/Configuration)
 
 
 
@@ -147,7 +151,7 @@ Hystrix'i ilk implemente edildiğinde config değerlerinin nasıl ayarlanması g
 
 Hystrix'i hayatımızı dahil ettikten sonra uygulamalarımızı canlı ortamda izlerken hata oranlarının arttığını görürüz ve hystrix'in reject ettiği isteklerin artışı bizi ister istemez config değerlerini arttırmaya zorlayabilir. Değerleri doğru bir şekilde vermiş isek bu kütüphaneyi kullanarak ortaya çıkarmak istediğimiz strateji de bu zaten. Uygulamalarımızı olağan dışı hallerden korumak. Her olağan dışı halde parametreleri arttırırsak kütüphanenin kullanımı bir anlam ifade etmeyebilir.
 
-Peki optimum değerleri en başta nasıl vereceğiz? Hystrix'in github sayfasında bununla ilgili bir formül ortaya çıkarılmış.
+Peki optimum değerleri en başta nasıl vereceğiz? Hystrix'in [github sayfasında.](https://github.com/Netflix/Hystrix/wiki/Configuration) bununla ilgili bir formül ortaya çıkarılmış.
 
 
 > **Request per second at peak when healty** * **99th percentile latency in seconds** + **breathing room**
