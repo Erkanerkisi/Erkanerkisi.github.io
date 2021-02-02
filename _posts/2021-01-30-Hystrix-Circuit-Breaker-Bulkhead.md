@@ -10,7 +10,7 @@ Bu yazıda hystrix ve resilient patternlerden olan circuit breaker ve bulkheadde
 
 ## 1. Hystrix
 
-Hystrix, netflix'in open source olarak yazılım dünyasına sunduğu ve dağıtık sistemlerde bağımlılıkların hata durumlarına karşı önlemler almak veya yönetmek anlamında ortaya çıkmış bir kütüphanedir.
+Hystrix, netflix'in open source olarak yazılım dünyasına sunduğu ve dağıtık sistemlerde bağımlılıkların hata durumlarına karşı önlemler almak veya yönetmek anlamında ortaya çıkmış bir [kütüphanedir](https://github.com/Netflix/Hystrix).
 
 ### 1.1 Hystrix Neden Ortaya Çıktı?
 
