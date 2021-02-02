@@ -23,14 +23,14 @@ Ortaya çıkma sebeplerini Netflix kendi github hesabında [şu şekilde](https:
 
 - Kompleks dağıtık bir mimaride hataların katlanarak büyümesini engellemek.
 
-- Hata ortaya çıktığında hemen fail vermesi ve düzeltilmesini sağlamak.
+- Hata ortaya çıktığında hızlıca farkedilip dönmesini(fail fast) ve düzeltilmesini sağlamak.
 
 - Fallback metodu belirleyerek hata durumlarında veya sınırların aşılması durumlarında yönlendirme yapmak.
 
 - Gerçek zamanlı görüntüleme ve alert mekanizması kurmak.
 
 
-Hystrix'in çözmeye çalıştığı problem, dağıtık mimaride yüzlerce servisin olduğu bir uygulamada bir veya bir kaç mikro servisin geç yanıt dönmesi veya dönememesinin kaynaklanan hasarı kullanıcı deneyimine yansıtmamak ve kullanıcının diğer servislere hala erişebiliyor olmasını sağlamak.(Netflix için kullanıcının film veya dizileri izlemesi gibi.)
+Hystrix'in çözmeye çalıştığı problem, dağıtık mimaride yüzlerce servisin olduğu bir sistemde bir veya bir kaç mikro servisin geç yanıt dönmesi veya dönememesinin kaynaklanan hasarı kullanıcı deneyimine yansıtmamak ve kullanıcının diğer servislere hala erişebiliyor olmasını sağlamak.(Netflix için kullanıcının film veya dizileri izlemesi gibi.)
 
 
 ### 1.2 Resilient Patterns
@@ -49,7 +49,7 @@ Uygulamaların daha dayanıklı olmasını sağlamak için aşağıda popüler o
 ### 1.2.1 Circuit Breaker
 
 
-Circuit breaker, servisler arasındaki iletişimde kullanıcın belirlediği hata oranlarının aşılması durumunda aktif duruma geçerek aradaki bağlantıyı kesen(devreyi açan) bir yönetim şeklidir. Hata alınan servise yapılan istekler engellenir ve kullanıcın tanımladığı bir fallback metoduna yönlendirilir. Bu sayede hata alınan servise sürekli istek atılması engellenmiş olur. Bir süre sonra servisin durumunun düzelip düzelmediğini anlamak için birkaç örnek request yönlendilir ve yanıt beklenir. Eğer yanıtlar başarılı ise devre kapanır ve akış tekrardan eski halini alır. Servisten yine hata gelmesi durumunda devre açılır ve yine kullanıcın belirlediği süre(sleep window) kadar gelen requestler reddedilir.
+Circuit breaker, servisler arasındaki iletişimde kullanıcın belirlediği hata oranlarının aşılması durumunda aktif duruma geçerek aradaki bağlantıyı kesen(devreyi açan) bir yönetim şeklidir. Hata alınan servise yapılan istekler engellenir ve kullanıcın tanımladığı bir fallback metoduna yönlendirilir. Bu sayede hata alınan servise sürekli istek atılması engellenmiş olur. Bir süre sonra servisin durumunun düzelip düzelmediğini anlamak için birkaç örnek request yönlendilir ve yanıt beklenir(half open). Eğer yanıtlar başarılı ise devre kapanır ve akış tekrardan eski halini alır. Servisten yine hata gelmesi durumunda devre açılır ve yine kullanıcın belirlediği süre(sleep window) kadar gelen requestler reddedilir.
 
 
 ### 1.2.2 Bulkhead
@@ -61,7 +61,7 @@ Bulkhead pattern, bir servisin geç cevap vermesi veya timeout'a düşmesi halin
 ### 1.3 Hystrix Nasıl Çalışıyor?
 
 
-Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command pattern yardımıyla ile sararak farklı bir thread de çalıştırıyor. Bu sayede kendi içerisinde tuttuğu metriklere göre de gelen isteklerin belirlediğimiz değerleri aşıp aşmadığını bilebiliyor. Örneğin timeout süresi veya thread sayısının belirli bir threshold üzerine çıkmaması gibi. Adım adım neler yaptığını inceleyelim;
+Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command pattern yardımı ile sararak farklı bir thread de çalıştırıyor. Bu sayede kendi içerisinde tuttuğu metriklere göre de gelen isteklerin belirlediğimiz değerleri aşıp aşmadığını bilebiliyor. Örneğin timeout süresi veya thread sayısının belirli bir threshold üzerine çıkmaması gibi. Adım adım neler yaptığını inceleyelim;
 
 
 
@@ -73,11 +73,11 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 - HystrixCommand veya HystrixObservableCommand oluşturulur.
 
-- Command tetiklenir veya çalıştırılır.(execute, queue, observe, toObservable)
+- Command tetiklenir ve çalıştırılır.(execute, queue, observe, toObservable)
 
-- Bu command için request caching açık ise response cache de var mı kontrol eder ve varsa anında döner.
+- Bu command için request caching açık ise response cachede var mı kontrol eder ve varsa anında döner.
 
-- Cache yok ise command execute edildiğinde hystrix circuit breaker açık mı diye kontrol eder. Eğer açık ise (buna tripped de denir.) komut çalıştırılmaz ve direk fallback metoduna yönlendirilir. Eğer circuit breaker kapalı ise thread veya queue kapasite kontrolü yapılır.
+- Cache yok ise command execute edildiğinde hystrix circuit breaker açık mı diye kontrol eder. Eğer açık ise (buna tripped de denir) komut çalıştırılmaz ve fallback metoduna yönlendirilir. Eğer circuit breaker kapalı ise thread veya queue kapasite kontrolü yapılır.
 
 - Threadpool veya queue tam kapasitedeyse hystrix komutu çalıştırmaz ve direk fallback metoduna yönlendirir.
 
@@ -99,13 +99,13 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 
 
-**coreSize:** Minimum hazırda bulunması gereken thread sayısı.
+**coreSize:** Minimum hazırda bulunması gereken thread sayısıdır.
 
-**maximumSize:** coreSize geçildiğinde çıkılacak maksimum thread sayısı.
+**maximumSize:** coreSize geçildiğinde çıkılacak maksimum thread sayısıdır.
 
-**allowMaximumSizeToDivergeFromCoreSize:** coreSize aşıldığında maximumSize'ın kullanılması için bir flag.True ise maximumSize a çıkar. false ise maximumSize çalışmaz.
+**allowMaximumSizeToDivergeFromCoreSize:** maximumSize değişkeninin etkin olmasını sağlar. Tipi Booleandır.
 
-**keepAliveTimeMinutes:** coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada kapatılacağı bilgisi.	
+**keepAliveTimeMinutes:** coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada kapatılacağı bilgisidir.	
 
 
 
@@ -115,7 +115,7 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
  
  
  
-**requestVolumeThreshold:** Hystrix'in hata oranlarına bakacağı request sayısı(örneğin sondan itibaren 20 requeste bak gibi.).
+**requestVolumeThreshold:** Hystrix'in hata oranlarına bakacağı request sayısı(örneğin sondan itibaren 20 requeste bak gibi).
 
 **sleepWindowInMilliseconds:** Circuit breakerın açık kalacağı süre.
 
@@ -131,7 +131,7 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 * Semaphore
 
-Execution stratejisi defaultta THREAD olarak veriliyor.
+Execution stratejisi defaultta `THREAD` olarak veriliyor.
 
 
 
@@ -139,7 +139,7 @@ Execution stratejisi defaultta THREAD olarak veriliyor.
 
 
 
-Thread isolation, gelen tüm requestler ayrı, fixed bir threadpool'a taşınır ve orada yönetilir. Ana thread'den izole etmenin avantajı eğer çağrılan servis timeout alır ise ana thread yoluna devam eder.
+Thread isolation, gelen tüm requestler ayrı, fixed bir threadpoola taşınır ve orada yönetilir. Ana threadden izole etmenin avantajı eğer çağrılan servis timeout alır ise ana thread yoluna devam eder.
 
 
 **timeoutInMilliseconds:** Ayrı olarak açılan thread'in time out süresi (sn).
@@ -151,7 +151,7 @@ Thread isolation, gelen tüm requestler ayrı, fixed bir threadpool'a taşınır
 
 
 
-Semaphore isolation, ayrı bir thread'de yönetmez(örneğin tomcat threadinden devam eder) ve ana thread'de hystrix komutunu çağırır. Burda belirlenen max eşzamanlı çağırım sayısına kadar izin verir. Ayrı bir thread olmadığından timeout alırsa thread isolationdaki gibi yoluna devam edemez.
+Semaphore isolation, ayrı bir thread'de yönetmez(örneğin tomcat threadinden devam eder) ve ana threadde hystrix komutunu çalıştırır. Belirlenen max eşzamanlı çağırım sayısına kadar izin verir. Ayrı bir thread olmadığından timeout alırsa thread isolationdaki gibi yoluna devam edemez.
 
 
 **maxConcurrentRequests:** Eşzamanlı karşılanacak maksimum request sayısı.
@@ -165,17 +165,17 @@ Diğer tüm configler için Hystrix'in [ilgili github wiki sayfasından bakılab
 
 
 
-Hystrix'i ilk implemente edildiğinde config değerlerinin nasıl ayarlanması gerektiği ile alakalı kafamızda soru işaretleri oluşuyor. Yapılması gerekenden daha az kaynak verirsek uygulamalarımızın çoğu isteği reddetme ihtimali var. Yada kaynağı çok verirsek histrixden bir fayda alamama gibi de bir ihtimalimiz var. Hystrix dökümantasyonunda bu konuda bir kesinlik olmadığını söylerken prod sistemlerde zaman içinde doğru değerlerin bulunacağından bahsediyor.
+Hystrix ilk entegre edildiğinde config değerlerinin nasıl ayarlanması gerektiği ile alakalı kafamızda soru işaretleri oluşuyor. Yapılması gerekenden daha az kaynak verirsek uygulamalarımızın çoğu isteğinin reddedilme ihtimali var. Ya da kaynağı çok verirsek histrixden bir fayda alamama gibi de bir ihtimalimiz var. Hystrix dökümantasyonunda bu konuda bir kesinlik olmadığını söylerken prod sistemlerde zaman içinde doğru değerlerin bulunacağından bahsediliyor.
 
-Hystrix'i hayatımızı dahil ettikten sonra uygulamalarımızı canlı ortamda izlerken hata oranlarının arttığını görürüz ve hystrix'in reject ettiği isteklerin artışı bizi ister istemez config değerlerini arttırmaya zorlayabilir. Değerleri doğru bir şekilde vermiş isek bu kütüphaneyi kullanarak ortaya çıkarmak istediğimiz strateji de bu zaten. Uygulamalarımızı olağan dışı hallerden korumak. Her olağan dışı halde parametreleri arttırırsak kütüphanenin kullanımı bir anlam ifade etmeyebilir.
+Hystrixi hayatımıza dahil ettikten sonra uygulamalarımızı canlı ortamda izlerken hata oranlarının arttığını görürüz ve hystrixin reject ettiği isteklerin artışı bizi ister istemez config değerlerini arttırmaya zorlayabilir. Değerleri doğru bir şekilde verdiğimize inanıyorsak içimizin rahat olması gerekiyor. Keza bu kütüphaneyi kullanarak ortaya çıkarmak istediğimiz strateji de bu zaten. Uygulamalarımızı olağan dışı hallerden korumak. Her olağan dışı halde parametreleri arttırırsak kütüphanenin kullanımı bir anlam ifade etmeyebilir.
 
-Peki optimum değerleri en başta nasıl vereceğiz? Hystrix'in [github sayfasında.](https://github.com/Netflix/Hystrix/wiki/Configuration) bununla ilgili bir formül ortaya çıkarılmış.
+Peki optimum değerleri en başta nasıl vereceğiz? Hystrixin [github sayfasında](https://github.com/Netflix/Hystrix/wiki/Configuration) bununla ilgili bir formül ortaya konmuş.
 
 
 > **Request per second at peak when healty** * **99th percentile latency in seconds** + **breathing room**
 
 
-Uygulamamızı zaten bir tool yardımıyla veya loglar ile monitor ediyorsak, gelen request sayıları ortalama olarak bellidir. Yoğun bir günde saniyedeki request sayısını, servisin responselarının %99 nu kapsayan süre(%99th percentile latency şeklinde geçer. Response'ların %99'unun bu süreden az olması öngörülüyor. ) ile çarparak nefes alacak kadar da bir ekleme sonucu ortaya bir değer çıkıyor. Bu değer optimal olmamakla birlikte başlangıç olarak bir fikir verebilir. 
+Uygulamamızı zaten bir tool yardımıyla veya loglar ile monitor ediyorsak, gelen request sayıları ortalama olarak bellidir. Yoğun bir günde saniyedeki request sayısını, servisin responselarının **%99** nu kapsayan süre(_%99th percentile latency şeklinde geçer. Response'ların %99'unun bu süreden az olması öngörülüyor._) ile çarparak nefes alacak kadar da bir ekleme sonucu ortaya bir değer çıkıyor. Bu değer optimal olmamakla birlikte başlangıç olarak bir fikir verebilir. 
 
 
 
@@ -215,15 +215,15 @@ Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 
 
 
-Hystrix komutu çalıştırıldığında "Hystrix-commandname" şeklinde bir thread açılır. Buna paralel olarak "HystrixTimer" adında bir thread daha açılır. Timer threadi sizin komutunuz çalıştırıldığında timeout alıp almamasını kontrol eden threaddir.
+Hystrix komutu çalıştırıldığında **Hystrix-commandname...** şeklinde bir thread açılır. Buna paralel olarak **HystrixTimer-...** adında bir thread daha açılır. Timer threadi sizin <u>komutunuz çalıştırıldığında timeout alıp almamasını</u> kontrol eden threaddir.
 
-Hystrix, her komut geldiğinde coreSize değerine kadar thread açar ve bu threadler de müsait olan tomcat threadlerini kullanırlar. Hystrix coreSize değerine kadar her komutta diğer hystrix threadleri müsait olsa dahi farklı bir hystrix threadi açar.
+Hystrix, her komut geldiğinde <u>coreSize değerine kadar thread açar</u> ve bu threadler de müsait olan tomcat threadlerini kullanırlar. Hystrix coreSize değerine kadar her komutta diğer hystrix threadleri müsait olsa dahi farklı bir hystrix threadi açar.
 
-Eşzamanlı olarak komut gönderildiğinde eğer tomcat tarafında yeterli thread yok ise tomcat threadleri açılmaya başlanır. coreSize değeri minimum tomcat spare değerinden büyük olduğunda hystrix threadleri halen tomcat threadlerini kullandığı için var olan müsait tomcat threadleri tekrardan minimum seviyesine inmez. Örneğin coreSize 20, tomcat minimum spare thread değeri 15, maximum 25 olsun. Eşzamanlı gelinen 20 komuttan sonra bekleyen hystrix threadi 20 olacaktır. Bu nedenle bekleyen tomcat thread sayısı da 20 olacaktır.
+Eşzamanlı olarak komut gönderildiğinde eğer tomcat tarafında yeterli thread yok ise tomcat threadleri açılmaya başlanır. coreSize değeri minimum tomcat spare değerinden büyük olduğunda hystrix threadleri halen tomcat threadlerini kullandığı için var olan müsait tomcat threadleri tekrardan minimum seviyesine inmez. Örneğin coreSize **20**, tomcat minimum spare thread değeri **15**, maximum **25** olsun. Eşzamanlı gelinen **20** komuttan sonra bekleyen hystrix threadi **20** olacaktır. Bu nedenle bekleyen tomcat thread sayısı da **20** olacaktır.
 
-coreSize değeri aşıldığında maximumSize değerine kadar hystrix yeni bir hystrix threadi oluşturur(Eğer allowMaximumSizeToDivergeFromCoreSize değeri true yapılmış ise). Bu sırada yeterli tomcat threadi yok ise tomcat threadi de açılır. Sonrasında keepAliveTimeMinutes değerine göre kullanılmayan hystrix threadleri kendini terminate eder ve tomcat threadini de kapatmış olur.
+coreSize değeri aşıldığında maximumSize değerine kadar hystrix yeni bir hystrix threadi oluşturur(Eğer </u>allowMaximumSizeToDivergeFromCoreSize değeri true yapılmış ise</u>). Bu sırada yeterli tomcat threadi yok ise tomcat threadi de açılır. Sonrasında keepAliveTimeMinutes değerine göre kullanılmayan hystrix threadleri kendini terminate eder ve tomcat threadini de kapatmış olur.
 
-Eşzamanlı gelen isteklerin sayısı tomcat maksimum thread sayısından fazla ama histrix threadpoolundaki maximumSize değerinden az ise, yapılan istekler reddedilmez ve full dolan threadlerin işini bitirmesi beklenir. Hystrix'deki "timeoutInMilliseconds" değişkeni bu konu ile bağlantılı değildir. Bu değişken komut başladığında bitmesine kadarki sürenin timeout değeridir. Burda hystrix henüz kullanacak müsait bir thread bulamadığından beklemeye geçer. Bulduğu an işi komutu çalıştırır.
+Eşzamanlı gelen isteklerin sayısı tomcat maksimum thread sayısından fazla ama histrix threadpoolundaki maximumSize değerinden az ise, yapılan istekler reddedilmez ve full dolan threadlerin işini bitirmesi beklenir. Hystrixdeki _timeoutInMilliseconds_ değişkeni bu konu ile bağlantılı değildir. Bu değişken komut başladığında bitmesine kadarki sürenin timeout değeridir. Burda hystrix henüz kullanacak müsait bir thread bulamadığından beklemeye geçer. Bulduğu an işi komutu çalıştırır.
 
 
 
