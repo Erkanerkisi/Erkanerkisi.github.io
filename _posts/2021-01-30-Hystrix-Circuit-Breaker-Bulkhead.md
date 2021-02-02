@@ -225,9 +225,9 @@ Aşağıdaki gibi istekler gateway üzerinden X uygulamasına, ordan ise belirle
 - Bağımlılıklarda oluşan hatalarda veya timeoutlarda  uygulamaları sürekli istekler ile boğma problemi. Ve akabinde ne yapılması gerektiği belirsizliği.
 
 
-Ayrı ayrı uygulamalara circuit breaker pattern'i uygulayabileceğimiz gibi, X uygulamasına da hem circuit breaker hem bulkhead pattern i uygulayabiliriz. Spring bize bazı anotasyonlar ile kolay bir şekilde hystrix command oluşturarak circuit breaker metodu oluşturmamıza yardımcı oluyor fakat burada durum biraz farklı. Gatewayden gelen her isteğin ayrıştırılarak dinamik olarak hangi uygulamaya gitmesi gerektiğine karar veriyoruz ve o uygulamaya rest call atıyoruz. ilgili bilgiler de yine db de tutularak karar verildiğini farz edelim. Ama dinamik olarak nasıl circuit breaker uygulayabiliriz?
+Ayrı ayrı uygulamalara circuit breaker pattern'i uygulayabileceğimiz gibi, X uygulamasına da hem circuit breaker hem bulkhead patterni uygulayabiliriz. Spring bize bazı anotasyonlar ile kolay bir şekilde hystrix command oluşturarak yardımcı oluyor fakat burada durum biraz farklı. Gatewayden gelen her isteğin ayrıştırılarak dinamik olarak hangi uygulamaya gitmesi gerektiğine karar veriyoruz ve o uygulamaya rest call atıyoruz. ilgili bilgiler de yine db de tutularak karar verildiğini farz edelim. Ama dinamik olarak nasıl circuit breaker uygulayabiliriz?
 
-Bizim case'imizde X e gelen her isteğin header bilgisinden hangi uygulamaya ve onun kullanması gereken threadpool a gitmesi gerektiğini söylemek gerekiyor. Ana amaç A,B,C,D ve E uygulamalarının belirli bir threadpool'lara ayrılmasını sağlamak. Örneğin;
+Bizim case'imizde X e gelen her isteğin header bilgisinden hangi uygulamaya ve onun kullanması gereken threadpoola gitmesi gerektiğini söylemek gerekiyor. Ana amaç A,B,C,D ve E uygulamalarının belirli bir threadpool'lara ayrılmasını sağlamak. Örneğin;
 
 X uygulaması üzerinde A isimli bir threadpool oluşturarak değişkenleri tanımlıyoruz. Diğer uygulamalar içinde kullanması gereken threadpool özelliklerini belirliyoruz.
 
@@ -295,7 +295,7 @@ public class ErkanHystrixCircuitBreakerFactory extends CircuitBreakerFactory<Hys
 ```
 
 
-Bir factory class'ı yaratarak CircuitBreakerFactory class'ını extend ediyoruz ve create metodumuzu oluşturuyoruz. Burda bunu yapmamızdaki amaç her gelen istekte eğer configürasyonu yapmamış isek onu yapmak, eğer yapmış isek onu get ederek bir circuit breaker oluşturmak. Şimdi çağırdığımız yere bakalım;
+Bir factory classı yaratarak CircuitBreakerFactory extend edilir ve create metodu oluşturulur. Bunun yapılmasının sebebi her gelen istekte eğer konfigürasyonu yapılmamışsa ise onu yapmak, eğer yapılmışsa onu kullanarak bir circuit breaker oluşturmak. Şimdi çağırdığımız yere bakalım;
 
 
 ```
@@ -305,7 +305,7 @@ public CircuitBreaker createCircuitBreaker(String name) {
 ```
 
 	
-"name" aslında bizim uygulama adımız. A ve B gibi. A değerini vererek factory class'ı A nın threadpool'unu kullanarak bir istek oluşturuluyor.
+"name" parametresi uygulama adıdır. A veya B gibi. A parametresini verdiğimizde factory yardımıyla bir komut oluşuyor ve A nın threadpoolunu kullanıyor.
 	
 	
 ```
@@ -315,9 +315,9 @@ public Response run(String name, Supplier<Response> supplier) {
 }
 ```
 
-Ayrıca bir fallback metodumuz var. Circuit breaker açıldığında veya herhangi bir hatada istekler fallback metodumuza düşecek ve gerekli aksiyonu almış olacağız.(Alert, log,  default response gibi)
+Ayrıca bir fallback metodu tanımlanabilir. Circuit breaker açıldığında veya herhangi bir hatada istekler fallback metoduna düşer ve gerekli aksiyon alınmış olur.(Alert, log,  default response gibi)
 
-Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. 16 dan fazla istek hatalı ise circuit open olacak ve diğer gelen istekler reddedilecek. Bu süre de 2 saniye.
+A için aşağıdaki değerleri baz alınırsa, son 20 istek değerlendirilecek. 16 dan fazla istek hatalı ise circuit açılacak(tripped) ve diğer gelen istekler 2 sn boyunca reddedilecek.
 
 	hystrix: 
 	  command:
@@ -342,7 +342,5 @@ Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. 16
 			  thread: 
 			    timeoutInMilliseconds: 30000
 
-
-Sonuç olarak, X uygulamasının diğer herhangi bir servisin geç cevap vermesi veya timeout alması halinde diğer tüm servislerin etkilenmemesi için bu şekilde bir strateji oluşturduk.
 
 Teşekkürler.
