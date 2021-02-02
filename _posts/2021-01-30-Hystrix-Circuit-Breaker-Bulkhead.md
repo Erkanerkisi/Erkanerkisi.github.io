@@ -42,12 +42,12 @@ Uygulamaların daha dayanıklı olmasını sağlamak için aşağıda popüler o
 * Stateless Services
 
 
-#### 1.2.1 Circuit Breaker
+### 1.2.1 Circuit Breaker
 
 Circuit breaker, servisler arasındaki iletişimde kullanıcın belirlediği hata oranlarının aşılması durumunda aktif duruma geçerek aradaki bağlantıyı kesen(devreyi açan) bir yönetim şeklidir. Hata alınan servise yapılan istekler engellenir ve kullanıcın tanımladığı bir fallback metoduna yönlendirilir. Bu sayede hata alınan servise sürekli istek atılması engellenmiş olur. Bir süre sonra servisin durumunun düzelip düzelmediğini anlamak için birkaç örnek request yönlendilir ve yanıt beklenir. Eğer yanıtlar başarılı ise devre kapanır ve akış tekrardan eski halini alır. Servisten yine hata gelmesi durumunda devre açılır ve yine kullanıcın belirlediği süre(sleep window) kadar gelen requestler reddedilir.
 
 
-#### 1.2.2 Bulkhead
+### 1.2.2 Bulkhead
 
 Bulkhead pattern, bir servisin geç cevap vermesi veya timeout'a düşmesi halinde tüm threadlerin kullanılmasını engellemek veya farklı bir deyişle ilgili servisinin eşzamanlı maksimum n kadar requeste/thread'e cevap verebilir olmasının ayarlanmasını sağlamak ile ilgilidir. Bulkhead sayesinde ilgili uygulamanın belli bir kısmı yanıt veremez olduğunda diğer kısımlarının hala çalışıyor olması sağlanır. Hystrix'in burda iki farklı isolation davranışı mevcut. 
 
@@ -84,23 +84,32 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 ### 1.4 Hystrix Configs
 
-#### 1.4.1 Threadpool Config
+### 1.4.1 Threadpool Config
+
 
 **coreSize:** Minimum hazırda bulunması gereken thread sayısı.
-**maximumSize:** coreSize geçildiğinde çıkılacak maksimum thread sayısı.
-**allowMaximumSizeToDivergeFromCoreSize:** coreSize aşıldığında maximumSize'ın kullanılması için bir flag. true ise maximumSize a çıkar. false ise maximumSize çalışmaz.
-**keepAliveTimeMinutes:** coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada kapatılacağı bilgisi.
 
-#### 1.4.2 Circuit Breaker Config
+**maximumSize:** coreSize geçildiğinde çıkılacak maksimum thread sayısı.
+
+**allowMaximumSizeToDivergeFromCoreSize:** coreSize aşıldığında maximumSize'ın kullanılması için bir flag. 											 True ise maximumSize a çıkar. false ise maximumSize çalışmaz.
+
+**keepAliveTimeMinutes:** coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada 						 kapatılacağı bilgisi.	
+
+### 1.4.2 Circuit Breaker Config
+
  
-**requestVolumeThreshold:** Hystrix'in hata oranlarına bakacağı request sayısı(örneğin sondan itibaren 20 requeste bak gibi.).
+**requestVolumeThreshold:** Hystrix'in hata oranlarına bakacağı request sayısı(örneğin sondan itibaren 20 							 requeste bak gibi.).
+
 **sleepWindowInMilliseconds:** Circuit breakerın açık kalacağı süre.
+
 **errorThresholdPercentage:**  Hata yüzde sınırı.
 	
 	
 Diğer tüm configler için Hystrix'in ilgili github wiki sayfasından bakılabilir(Link).
 
-#### 1.4.3 Configleri Nasıl Ayarlamalı?
+
+
+### 1.4.3 Configleri Nasıl Ayarlamalı?
 
 Hystrix'i ilk implemente edildiğinde config değerlerinin nasıl ayarlanması gerektiği ile alakalı kafamızda soru işaretleri oluşuyor. Yapılması gerekenden daha az kaynak verirsek uygulamalarımızın çoğu isteği reddetme ihtimali var. Yada kaynağı çok verirsek histrixden bir fayda alamama gibi de bir ihtimalimiz var. Hystrix dökümantasyonunda bu konuda bir kesinlik olmadığını söylerken prod sistemlerde zaman içinde doğru değerlerin bulunacağından bahsediyor.
 
@@ -108,7 +117,9 @@ Hystrix'i hayatımızı dahil ettikten sonra uygulamalarımızı canlı ortamda 
 
 Peki optimum değerleri en başta nasıl vereceğiz? Hystrix'in github sayfasında bununla ilgili bir formül ortaya çıkarılmış.
 
-**Request per second at peak when healty** * **99th percentile latency in seconds** + **breathing room**
+
+> **Request per second at peak when healty** * **99th percentile latency in seconds** + **breathing room**
+
 
 Uygulamamızı zaten bir tool yardımıyla veya loglar ile monitor ediyorsak, gelen request sayıları ortalama olarak bellidir. Yoğun bir günde saniyedeki request sayısını, servisin responselarının %99 nu kapsayan süre(%99th percentile latency şeklinde geçer. Response'ların %99'unun bu süreden az olması öngörülüyor. ) ile çarparak nefes alacak kadar da bir ekleme sonucu ortaya bir değer çıkıyor. Bu değer optimal olmamakla birlikte başlangıç olarak bir fikir verebilir. 
 
@@ -119,11 +130,16 @@ Uygulamamızı zaten bir tool yardımıyla veya loglar ile monitor ediyorsak, ge
 
 
 
+
 ### 1.5 Tomcat ve Hystrix Threadleri
+
 
 Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 
-#### 1.5.1 Tomcat configs
+
+
+### 1.5.1 Tomcat configs
+
 
 	tomcat:
       max-threads: Maksimum thread sayısı.
@@ -132,7 +148,9 @@ Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 	  max-connections: Servera yapılabilecek maksimum bağlantı sayısı.
 	  accept-count: Kuyrukta bekletilen connection sayısı.
 
-#### 1.5.2 Threadler
+
+### 1.5.2 Threadler
+
 
 Hystrix komutu çalıştırıldığında "Hystrix-commandname" şeklinde bir thread açılır. Buna paralel olarak "HystrixTimer" adında bir thread daha açılır. Timer threadi sizin komutunuz çalıştırıldığında timeout alıp almamasını kontrol eden threaddir.
 
@@ -144,6 +162,7 @@ coreSize değeri aşıldığında maximumSize değerine kadar hystrix thread aç
 
 
 ### 1.6 Request Collapsing
+
 
 Hystrix'de çok kısa süren fakat yoğun istek alan servisler için hystrix commandlerini toplayarak tek thread ve networkde kullanım mümkündür. Buna Request Collapsing deniyor ve Netflix'in ihtiyaçları neticesinde ortaya çıkmıştır. Normalde her histrix komutu bir thread açarak ilgili bağımlılığa gidiyor ve istek gönderiyor. Çok kısa zamanlarda(histrix dökümantasyonunda 10ms ve daha az olarak belirtilmiş) birden fazla command geliyor ise bu requestleri toplayıp tek thread açarak ilgili bağımlılığa gitmek request collapsing ile mümkün oluyor. Kullanılmasının en önemli nedeni eşzamanlı çalıştırılan histrix commandleri için thread ve network connection kullanım sayılarını azalmak.
 
