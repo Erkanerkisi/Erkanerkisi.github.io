@@ -49,11 +49,8 @@ Circuit breaker, servisler arasındaki iletişimde kullanıcın belirlediği hat
 
 ### 1.2.2 Bulkhead
 
-Bulkhead pattern, bir servisin geç cevap vermesi veya timeout'a düşmesi halinde tüm threadlerin kullanılmasını engellemek veya farklı bir deyişle ilgili servisinin eşzamanlı maksimum n kadar requeste/thread'e cevap verebilir olmasının ayarlanmasını sağlamak ile ilgilidir. Bulkhead sayesinde ilgili uygulamanın belli bir kısmı yanıt veremez olduğunda diğer kısımlarının hala çalışıyor olması sağlanır. Hystrix'in burda iki farklı isolation davranışı mevcut. 
+Bulkhead pattern, bir servisin geç cevap vermesi veya timeout'a düşmesi halinde tüm threadlerin kullanılmasını engellemek veya farklı bir deyişle ilgili servisinin eşzamanlı maksimum n kadar requeste/thread'e cevap verebilir olmasının ayarlanmasını sağlamak ile ilgilidir. Bulkhead sayesinde ilgili uygulamanın belli bir kısmı yanıt veremez olduğunda diğer kısımlarının hala çalışıyor olması sağlanır. 
 
-Thread isolation, defult olarak isolation stratejisidir ve her gelen çağırımlar ayrı, fixed bir threadpool'a taşınır ve orada yönetilir. Ana thread'den izole etmenin avantajı eğer çağrılan servis timeout alır ise ana thread yoluna devam eder.
-
-Semaphore isolation, ayrı bir thread'de yönetmez(örneğin tomcat threadinden devam eder) ve ana thread'de hystrix komutunu çağırır. Burda belirlenen max eşzamanlı çağırım sayısına kadar izin verir. Ayrı bir thread olmadığından timeout alırsa thread isolationdaki gibi yoluna devam edemez.
 
 ### 1.3 Hystrix Nasıl Çalışıyor?
 
@@ -103,7 +100,28 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 **sleepWindowInMilliseconds:** Circuit breakerın açık kalacağı süre.
 
 **errorThresholdPercentage:**  Hata yüzde sınırı.
-	
+
+### 1.4.3 Execution Stratejileri
+
+Execution stratejisi defaultta THREAD olarak veriliyor.
+
+#### 1.4.3.1 Thread
+
+
+Thread isolation, gelen tüm requestler ayrı, fixed bir threadpool'a taşınır ve orada yönetilir. Ana thread'den izole etmenin avantajı eğer çağrılan servis timeout alır ise ana thread yoluna devam eder.
+
+
+**timeoutInMilliseconds:** Ayrı olarak açılan thread'in time out süresi (sn).
+
+
+#### 1.4.3.2 Semaphore
+
+
+Semaphore isolation, ayrı bir thread'de yönetmez(örneğin tomcat threadinden devam eder) ve ana thread'de hystrix komutunu çağırır. Burda belirlenen max eşzamanlı çağırım sayısına kadar izin verir. Ayrı bir thread olmadığından timeout alırsa thread isolationdaki gibi yoluna devam edemez.
+
+
+**maxConcurrentRequests:** Eşzamanlı karşılanacak maksimum request sayısı.
+
 	
 Diğer tüm configler için Hystrix'in ilgili github wiki sayfasından bakılabilir(Link).
 
@@ -141,12 +159,17 @@ Tomcat ve Hystrix threadlerinin nasıl çalıştığını inceleyelim.
 ### 1.5.1 Tomcat configs
 
 
-	tomcat:
-      max-threads: Maksimum thread sayısı.
-	  connection-timeout: Thread'in connection timeout süresi (ms).
-	  min-spare-threads: Minimum hazırda bekleyen thread sayısı.
-	  max-connections: Servera yapılabilecek maksimum bağlantı sayısı.
-	  accept-count: Kuyrukta bekletilen connection sayısı.
+
+**max-threads:** Maksimum thread sayısı.
+
+**connection-timeout:** Thread'in connection timeout süresi (ms).
+
+**min-spare-threads:** Minimum hazırda bekleyen thread sayısı.
+
+**max-connections:** Servera yapılabilecek maksimum bağlantı sayısı.
+
+**accept-count:** Kuyrukta bekletilen connection sayısı.
+
 
 
 ### 1.5.2 Threadler
@@ -161,6 +184,7 @@ Eşzamanlı olarak komut gönderildiğinde eğer tomcat tarafında yeterli threa
 coreSize değeri aşıldığında maximumSize değerine kadar hystrix thread açabiliyor(Eğer allowMaximumSizeToDivergeFromCoreSize değeri true yapılmış ise). Bu da yeterli gelmediğinde tomcat threadi açıyor anlamına geliyor. Sonrasında keepAliveTimeMinutes değerine göre kullanılmayan hystrix threadleri kendini terminate ediyor ve tomcat threadini de kapatmış oluyor.
 
 
+
 ### 1.6 Request Collapsing
 
 
@@ -170,6 +194,7 @@ Netflix ideal olarak globalde tüm tomcat threadlerinde bunu uyguluyor. Fakat te
 
 
 ![_config.yml]({{ site.baseurl }}/images/collapser.png)
+
 
 
 ## 2.0 Use Case
@@ -186,9 +211,9 @@ Aşağıdaki gibi istekler gateway üzerinden X uygulamasına, ordan ise belirle
 - Bağımlılıklarda oluşan hatalarda veya timeoutlarda  uygulamaları sürekli istekler ile boğma problemi. Ve akabinde ne yapılması gerektiği belirsizliği.
 
 
-Ayrı ayrı uygulamalara circuit breaker pattern'i uygulayabileceğimiz gibi, X uygulamasına da hem circuit breaker hem bulkhead pattern i uygulayabiliriz. Spring bize bazı anotasyonlar ile kolay bir şekilde hystrix command oluşturarak circuit breaker metodu oluşturmamıza yardımcı oluyor fakat burada durum biraz farklı. gatewayden gelen her isteğin ayrıştırılarak dinamik olarak hangi uygulamaya gitmesi gerektiğine karar veriyoruz ve o uygulamaya rest call atıyoruz. ilgili bilgiler de yine db de tutularak karar verildiğini farz edelim. Ama dinamik olarak nasıl circuit breaker uygulayabiliriz?
+Ayrı ayrı uygulamalara circuit breaker pattern'i uygulayabileceğimiz gibi, X uygulamasına da hem circuit breaker hem bulkhead pattern i uygulayabiliriz. Spring bize bazı anotasyonlar ile kolay bir şekilde hystrix command oluşturarak circuit breaker metodu oluşturmamıza yardımcı oluyor fakat burada durum biraz farklı. Gatewayden gelen her isteğin ayrıştırılarak dinamik olarak hangi uygulamaya gitmesi gerektiğine karar veriyoruz ve o uygulamaya rest call atıyoruz. ilgili bilgiler de yine db de tutularak karar verildiğini farz edelim. Ama dinamik olarak nasıl circuit breaker uygulayabiliriz?
 
-Bizim case'imizde X e gelen her isteğin header bilgisinden bilgisini pars ederek hangi threadpool'u kullanması gerektiğini söylemek gerekiyordu. Ana amaç A,B,C,D ve E uygulamalarının belirli bir threadpool'lara ayrılmasını sağlamak. Örneğin;
+Bizim case'imizde X e gelen her isteğin header bilgisinden hangi uygulamaya ve onun kullanması gereken threadpool a gitmesi gerektiğini söylemek gerekiyor. Ana amaç A,B,C,D ve E uygulamalarının belirli bir threadpool'lara ayrılmasını sağlamak. Örneğin;
 
 X uygulaması üzerinde A isimli bir threadpool oluşturarak değişkenleri tanımlıyoruz. Diğer uygulamalar içinde kullanması gereken threadpool özelliklerini belirliyoruz.
 
@@ -208,18 +233,10 @@ X uygulaması üzerinde A isimli bir threadpool oluşturarak değişkenleri tan�
 
 
 
-Bu değerlere göre gelen isteklerin hangi uygulamalara ve kullanması gereken threadpoollarına kadar belirlemiş oluyoruz. Hysrix de A uygulamasına gelen çağrıların thread kullanımlarını sınırlayabilmemizi olanak tanıyor. A uygulamasına gelen yoğun isteklerin ve akabinde timeout almaya başlamasıyla X deki tüm threadleri tüketmesini engelleyerek diğer isteklerin hala çalışabilmesini sağlıyoruz.
+Bu değerlere göre gelen isteklerin hangi uygulamalara ve kullanması gereken threadpoollarına kadar belirlemiş oluyoruz. Hysrix de A uygulamasına gelen çağrıların thread kullanımlarını sınırlayabilmemize olanak tanıyor. A uygulamasına gelen yoğun isteklerin ve akabinde timeout almaya başlamasıyla X deki tüm threadleri tüketmesini engelleyerek diğer isteklerin hala çalışabilmesini sağlıyoruz.
 
 
-Kısaca değişkenlere bakalım;
-
-	coreSize: minimum hazırda bulunması gereken thread sayısı.
-	maximumSize: coreSize geçildiğinde çıkılacak maksimum thread sayısı.
-	allowMaximumSizeToDivergeFromCoreSize: coreSize aşıldığında maximumSize'ın kullanılması için bir flag. true ise maximumSize a çıkar. false ise maximumSize çalışmaz.
-	keepAliveTimeMinutes: coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada kapatılacağı bilgisi.
-
-
-Şimdi X uygulamasına gelen isteklerin nasıl dinamik olarak hystrix command'ine çevrildiğine bakalım;
+Şimdi X uygulamasına gelen isteklerin nasıl dinamik olarak hystrix command'ine çevrildiğini inceleyelim;
 
 ```
 @Component
@@ -274,7 +291,7 @@ public CircuitBreaker createCircuitBreaker(String name) {
 ```
 
 	
-"name" aslında bizim uygulama adımız. A ve B gibi. A değerini vererek factory class'ı A nın threadpool'unu kullanarak bir istek oluşturuyor.
+"name" aslında bizim uygulama adımız. A ve B gibi. A değerini vererek factory class'ı A nın threadpool'unu kullanarak bir istek oluşturuluyor.
 	
 	
 ```
@@ -284,15 +301,8 @@ public Response run(String name, Supplier<Response> supplier) {
 }
 ```
 
-Ayrıca bir fallback metodumuz da mevcut. Burda circuit open olduğunda veya herhangi bir hatada fallback metodumuza düşecek ve gerekli aksiyonu almış olacağız.(Alert, log,  default response gibi)
+Ayrıca bir fallback metodumuz var. Circuit breaker açıldığında veya herhangi bir hatada istekler fallback metodumuza düşecek ve gerekli aksiyonu almış olacağız.(Alert, log,  default response gibi)
 
-circuit breaker ve isolation stratejilerini tanımlayalım.
-
-	requestVolumeThreshold: hystrix' değerlendireceği request sayısı.
-	sleepWindowInMilliseconds: Circuit open kalacağı süre.
-	errorThresholdPercentage:  hata yüzde sınırı.
-	
-	
 Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. 16 dan fazla istek hatalı ise circuit open olacak ve diğer gelen istekler reddedilecek. Bu süre de 2 saniye.
 
 	hystrix: 
@@ -317,12 +327,6 @@ Hystrix, aşağıdaki değerleri baz alırsak A için son 20 isteğe bakacak. 16
 		    isolation: 
 			  thread: 
 			    timeoutInMilliseconds: 30000
-
-
-	timeoutInMilliseconds: Streteji default olarak THREAD'dir. Semaphore' a çevrilmesi istenirse ayrıca belirtilmesi gerekiyor. Biz thread ile ilerledik ve timeoutInMilliseconds değerini 30 saniye olarak belirledik. Ayrı olarak açılan thread'in time out süresi 30 sn.
-	
-	maxConcurrentRequests: Sadece strateji semaphore olduğunda çalışır. eşzamanlı karşılanacak maksimum request sayısı.
-
 
 
 Sonuç olarak, X uygulamasının diğer herhangi bir servisin geç cevap vermesi veya timeout alması halinde diğer tüm servislerin etkilenmemesi için bu şekilde bir strateji oluşturduk.
