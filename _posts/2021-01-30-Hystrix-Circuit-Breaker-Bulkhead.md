@@ -81,7 +81,9 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 ### 1.4 Hystrix Configs
 
+
 ### 1.4.1 Threadpool Config
+
 
 
 **coreSize:** Minimum hazırda bulunması gereken thread sayısı.
@@ -92,8 +94,11 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 **keepAliveTimeMinutes:** coreSize aşıldığında açılan threadlerin kullanılmadığı taktirde ne kadar dakikada 						 kapatılacağı bilgisi.	
 
+
+
 ### 1.4.2 Circuit Breaker Config
 
+ 
  
 **requestVolumeThreshold:** Hystrix'in hata oranlarına bakacağı request sayısı(örneğin sondan itibaren 20 							 requeste bak gibi.).
 
@@ -101,9 +106,14 @@ Hystrix, tüm dışarıya çıkan veya içerindeki çağırımları command patt
 
 **errorThresholdPercentage:**  Hata yüzde sınırı.
 
+
+
 ### 1.4.3 Execution Stratejileri
 
+
 Execution stratejisi defaultta THREAD olarak veriliyor.
+
+
 
 #### 1.4.3.1 Thread
 
@@ -112,6 +122,8 @@ Thread isolation, gelen tüm requestler ayrı, fixed bir threadpool'a taşınır
 
 
 **timeoutInMilliseconds:** Ayrı olarak açılan thread'in time out süresi (sn).
+
+
 
 
 #### 1.4.3.2 Semaphore
@@ -128,6 +140,8 @@ Diğer tüm configler için Hystrix'in ilgili github wiki sayfasından bakılabi
 
 
 ### 1.4.3 Configleri Nasıl Ayarlamalı?
+
+
 
 Hystrix'i ilk implemente edildiğinde config değerlerinin nasıl ayarlanması gerektiği ile alakalı kafamızda soru işaretleri oluşuyor. Yapılması gerekenden daha az kaynak verirsek uygulamalarımızın çoğu isteği reddetme ihtimali var. Yada kaynağı çok verirsek histrixden bir fayda alamama gibi de bir ihtimalimiz var. Hystrix dökümantasyonunda bu konuda bir kesinlik olmadığını söylerken prod sistemlerde zaman içinde doğru değerlerin bulunacağından bahsediyor.
 
